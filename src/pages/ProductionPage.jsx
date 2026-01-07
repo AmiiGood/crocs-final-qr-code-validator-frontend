@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { CheckCircle, AlertCircle, Package } from "lucide-react";
+import { CheckCircle, AlertCircle } from "lucide-react";
 import { cajaService } from "../services/api";
 import toast from "react-hot-toast";
 
@@ -11,12 +11,10 @@ const ProductionPage = () => {
 
   const inputRef = useRef(null);
 
-  // Auto-focus constante
   useEffect(() => {
     inputRef.current?.focus();
   }, [cajaActual]);
 
-  // Refrescar progreso automáticamente
   useEffect(() => {
     if (cajaActual) {
       const interval = setInterval(loadProgreso, 2000);
@@ -28,7 +26,6 @@ const ProductionPage = () => {
     if (!raw) return "";
     let cleaned = raw.trim().toUpperCase();
 
-    // Si es URL de Crocs, extraer solo el código
     if (
       cleaned.includes("verify.crocs.com") ||
       cleaned.includes("VERIFY.CROCS.COM")
@@ -37,15 +34,11 @@ const ProductionPage = () => {
       cleaned = parts[parts.length - 1];
     }
 
-    // Remover prefijo Q- si existe
     cleaned = cleaned.replace(/^Q[-\/]/i, "");
 
-    // IMPORTANTE: Si tiene $, es código de caja, preservar guiones
     if (cleaned.includes("$")) {
-      // Solo remover caracteres especiales raros, pero mantener guiones
       return cleaned.replace(/[^A-Z0-9$\-]/g, "");
     } else {
-      // Es QR code, remover todo excepto alfanuméricos
       return cleaned.replace(/[^A-Z0-9]/g, "");
     }
   };
@@ -76,7 +69,7 @@ const ProductionPage = () => {
       await iniciarCaja(cleaned);
     } else {
       if (!cajaActual) {
-        toast.error("⚠️ Primero escanea una caja");
+        toast.error("Primero escanea una caja");
         setScanInput("");
         return;
       }
@@ -92,9 +85,7 @@ const ProductionPage = () => {
         setCajaActual(response.data.data.caja);
         setScanInput("");
         await loadProgreso();
-        toast.success("📦 Caja iniciada - Escanea los pares", {
-          duration: 2000,
-        });
+        toast.success("Caja iniciada");
       }
     } catch (error) {
       toast.error(error.response?.data?.error || "Error al iniciar caja");
@@ -112,16 +103,14 @@ const ProductionPage = () => {
           response.data.data.caja;
 
         if (completa) {
-          toast.success("🎉 ¡Caja completada!", { duration: 2500 });
+          toast.success("Caja completada");
           setTimeout(() => {
             setCajaActual(null);
             setProgreso(null);
             setScanInput("");
           }, 1500);
         } else {
-          toast.success(`✅ ${cantidad_escaneada}/${cantidad_requerida}`, {
-            duration: 1000,
-          });
+          toast.success(`${cantidad_escaneada}/${cantidad_requerida}`);
           await loadProgreso();
           setScanInput("");
         }
@@ -133,199 +122,172 @@ const ProductionPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-3">
-            📦 Producción
-          </h1>
-          <p className="text-xl text-gray-600">
-            {!cajaActual
-              ? "Escanea el código de una caja para comenzar"
-              : "Escanea cada par de zapatos"}
-          </p>
-        </div>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold text-neutral-900 mb-1">
+          Producción
+        </h1>
+        <p className="text-sm text-neutral-500">
+          {!cajaActual
+            ? "Escanea el código de una caja para comenzar"
+            : "Escanea cada par de zapatos"}
+        </p>
+      </div>
 
-        {/* Card Principal */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8 border-4 border-indigo-200">
-          {/* Info de Caja Actual */}
-          {cajaActual && progreso && (
-            <div className="mb-8 pb-8 border-b-4 border-gray-200">
-              <div className="flex items-start justify-between mb-6">
-                <div>
-                  <div className="inline-block bg-indigo-100 px-4 py-2 rounded-lg mb-3">
-                    <p className="text-sm font-semibold text-indigo-700">
-                      CAJA ACTIVA
-                    </p>
-                  </div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-3">
-                    {cajaActual.codigo_caja}
-                  </h2>
-                  <div className="space-y-1">
-                    <p className="text-lg text-gray-700">
-                      <span className="font-semibold">SKU:</span>{" "}
-                      {cajaActual.sku_number}
-                    </p>
-                    <p className="text-lg text-gray-700">
-                      <span className="font-semibold">Modelo:</span>{" "}
-                      {cajaActual.style_name}
-                    </p>
-                    <p className="text-gray-600">
-                      {cajaActual.color_name} - {cajaActual.size}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    if (window.confirm("¿Cancelar esta caja?")) {
-                      setCajaActual(null);
-                      setProgreso(null);
-                      setScanInput("");
-                    }
-                  }}
-                  className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-colors"
-                >
-                  ✕ Cancelar
-                </button>
-              </div>
-
-              {/* Progreso Visual */}
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-2xl font-bold text-gray-700">
-                    Progreso
-                  </span>
-                  <span className="text-6xl font-black text-indigo-600">
-                    {progreso.caja.cantidad_escaneada}/
-                    {progreso.caja.cantidad_pares}
-                  </span>
-                </div>
-
-                <div className="relative w-full bg-gray-300 rounded-full h-16 mb-4 overflow-hidden shadow-inner">
-                  <div
-                    className={`h-16 rounded-full transition-all duration-500 flex items-center justify-center shadow-lg ${
-                      progreso.completa ? "bg-green-500" : "bg-indigo-600"
-                    }`}
-                    style={{ width: `${progreso.caja.porcentaje}%` }}
-                  >
-                    <span className="text-white font-black text-2xl">
-                      {progreso.caja.porcentaje.toFixed(0)}%
-                    </span>
-                  </div>
-                </div>
-
-                {!progreso.completa && (
-                  <p className="text-center text-3xl font-bold text-gray-700">
-                    Faltan{" "}
-                    <span className="text-indigo-600">
-                      {progreso.restantes}
-                    </span>{" "}
-                    pares
+      <div className="card max-w-2xl mx-auto">
+        {/* Info de Caja Actual */}
+        {cajaActual && progreso && (
+          <div className="mb-8 pb-8 border-b border-neutral-200">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <p className="text-xs text-neutral-500 mb-1">CAJA ACTIVA</p>
+                <h2 className="text-xl font-medium text-neutral-900 mb-3">
+                  {cajaActual.codigo_caja}
+                </h2>
+                <div className="space-y-1 text-sm">
+                  <p className="text-neutral-700">
+                    <span className="text-neutral-500">SKU:</span>{" "}
+                    {cajaActual.sku_number}
                   </p>
-                )}
+                  <p className="text-neutral-700">
+                    <span className="text-neutral-500">Modelo:</span>{" "}
+                    {cajaActual.style_name}
+                  </p>
+                  <p className="text-neutral-500 text-xs">
+                    {cajaActual.color_name} - {cajaActual.size}
+                  </p>
+                </div>
               </div>
+              <button
+                onClick={() => {
+                  if (window.confirm("¿Cancelar esta caja?")) {
+                    setCajaActual(null);
+                    setProgreso(null);
+                    setScanInput("");
+                  }
+                }}
+                className="btn-ghost text-xs"
+              >
+                Cancelar
+              </button>
             </div>
-          )}
 
-          {/* Input de Escaneo */}
-          <form onSubmit={handleScan} className="space-y-6">
-            <div>
-              <label className="block text-center mb-4">
-                <span className="text-2xl font-bold text-gray-900">
-                  {!cajaActual ? "🔍 Escanear Caja" : "🔍 Escanear Par"}
+            {/* Progreso */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-neutral-700">
+                  Progreso
                 </span>
-              </label>
-              <input
-                ref={inputRef}
-                type="text"
-                value={scanInput}
-                onChange={(e) => setScanInput(e.target.value)}
-                placeholder={
-                  !cajaActual ? "Código de caja..." : "Código QR del par..."
-                }
-                className="w-full px-6 py-6 text-3xl font-mono text-center border-4 border-indigo-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50"
-                autoFocus
-                disabled={loading}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={!scanInput.trim() || loading}
-              className={`w-full py-6 text-2xl font-black rounded-xl transition-all shadow-lg ${
-                !cajaActual
-                  ? "bg-indigo-600 hover:bg-indigo-700 text-white"
-                  : "bg-green-600 hover:bg-green-700 text-white"
-              } disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105`}
-            >
-              {loading
-                ? "⏳ Procesando..."
-                : !cajaActual
-                ? "📦 Iniciar Caja"
-                : "✅ Escanear Par"}
-            </button>
-          </form>
-
-          {/* Historial */}
-          {progreso?.historial && progreso.historial.length > 0 && (
-            <div className="mt-8 pt-8 border-t-4 border-gray-200">
-              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                <CheckCircle className="h-6 w-6 text-green-600 mr-2" />
-                Últimos Escaneos
-              </h3>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {progreso.historial.slice(0, 8).map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between p-3 bg-green-50 border-l-4 border-green-500 rounded-lg"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="bg-green-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">
-                        {progreso.historial.length - index}
-                      </div>
-                      <span className="font-mono font-semibold text-gray-900">
-                        {item.codigo_qr}
-                      </span>
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {new Date(item.fecha_escaneo).toLocaleTimeString()}
-                    </span>
-                  </div>
-                ))}
+                <span className="text-2xl font-medium text-neutral-900">
+                  {progreso.caja.cantidad_escaneada}/
+                  {progreso.caja.cantidad_pares}
+                </span>
               </div>
-            </div>
-          )}
-        </div>
 
-        {/* Ayuda */}
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
-          <div className="flex items-start space-x-3">
-            <AlertCircle className="h-8 w-8 text-blue-600 flex-shrink-0 mt-1" />
-            <div>
-              <h3 className="font-bold text-xl text-gray-900 mb-2">
-                💡 Instrucciones
-              </h3>
-              <ol className="space-y-1 text-gray-700">
-                <li>
-                  <strong>1.</strong> Escanea el código de barras de la caja
-                  (tiene símbolo $)
-                </li>
-                <li>
-                  <strong>2.</strong> Escanea cada código QR de los pares uno
-                  por uno
-                </li>
-                <li>
-                  <strong>3.</strong> Cuando completes todos los pares, la caja
-                  se marca como lista automáticamente
-                </li>
-                <li>
-                  <strong>4.</strong> Comienza con la siguiente caja
-                </li>
-              </ol>
+              <div className="relative w-full bg-neutral-200 h-2">
+                <div
+                  className={`h-2 transition-all duration-500 ${
+                    progreso.completa ? "bg-neutral-900" : "bg-neutral-700"
+                  }`}
+                  style={{ width: `${progreso.caja.porcentaje}%` }}
+                ></div>
+              </div>
+
+              {!progreso.completa && (
+                <p className="text-sm text-neutral-600 text-center">
+                  Faltan {progreso.restantes} pares
+                </p>
+              )}
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Input de Escaneo */}
+        <form onSubmit={handleScan} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              {!cajaActual ? "Escanear Caja" : "Escanear Par"}
+            </label>
+            <input
+              ref={inputRef}
+              type="text"
+              value={scanInput}
+              onChange={(e) => setScanInput(e.target.value)}
+              placeholder={
+                !cajaActual ? "Código de caja..." : "Código QR del par..."
+              }
+              className="input font-mono"
+              autoFocus
+              disabled={loading}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={!scanInput.trim() || loading}
+            className="btn-primary w-full"
+          >
+            {loading
+              ? "Procesando..."
+              : !cajaActual
+              ? "Iniciar Caja"
+              : "Escanear Par"}
+          </button>
+        </form>
+
+        {/* Historial */}
+        {progreso?.historial && progreso.historial.length > 0 && (
+          <div className="mt-8 pt-8 border-t border-neutral-200">
+            <h3 className="text-sm font-medium text-neutral-900 mb-4">
+              Últimos Escaneos
+            </h3>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {progreso.historial.slice(0, 8).map((item, index) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between p-3 border border-neutral-200 text-sm"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-6 h-6 bg-neutral-900 text-white flex items-center justify-center text-xs font-medium">
+                      {progreso.historial.length - index}
+                    </div>
+                    <span className="font-mono text-neutral-900">
+                      {item.codigo_qr}
+                    </span>
+                  </div>
+                  <span className="text-xs text-neutral-500">
+                    {new Date(item.fecha_escaneo).toLocaleTimeString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Instrucciones */}
+      <div className="border border-neutral-200 p-6 max-w-2xl mx-auto">
+        <h3 className="text-sm font-medium text-neutral-900 mb-3">
+          Instrucciones
+        </h3>
+        <ol className="space-y-2 text-sm text-neutral-600">
+          <li className="flex">
+            <span className="text-neutral-400 mr-3">1.</span>
+            <span>
+              Escanea el código de barras de la caja (tiene símbolo $)
+            </span>
+          </li>
+          <li className="flex">
+            <span className="text-neutral-400 mr-3">2.</span>
+            <span>Escanea cada código QR de los pares uno por uno</span>
+          </li>
+          <li className="flex">
+            <span className="text-neutral-400 mr-3">3.</span>
+            <span>
+              La caja se marca como lista automáticamente al completar
+            </span>
+          </li>
+        </ol>
       </div>
     </div>
   );

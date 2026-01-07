@@ -18,34 +18,28 @@ function App() {
         </Routes>
       </Layout>
       <Toaster
-        position="top-center"
+        position="top-right"
         toastOptions={{
-          duration: 2000,
+          duration: 3000,
           style: {
             background: "#fff",
-            color: "#1f2937",
-            fontSize: "18px",
-            fontWeight: "600",
-            padding: "16px 24px",
-            borderRadius: "12px",
-            boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+            color: "#171717",
+            fontSize: "14px",
+            fontWeight: "500",
+            padding: "12px 16px",
+            border: "1px solid #e5e5e5",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
           },
           success: {
             iconTheme: {
-              primary: "#10b981",
+              primary: "#171717",
               secondary: "#fff",
-            },
-            style: {
-              border: "3px solid #10b981",
             },
           },
           error: {
             iconTheme: {
-              primary: "#ef4444",
+              primary: "#171717",
               secondary: "#fff",
-            },
-            style: {
-              border: "3px solid #ef4444",
             },
           },
         }}

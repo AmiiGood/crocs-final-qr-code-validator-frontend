@@ -247,6 +247,10 @@ const Dashboard = () => {
                         class: "badge-success",
                         label: "Completada",
                       },
+                      completada: {
+                        class: "badge-success",
+                        label: "Completada",
+                      },
                       enviada: { class: "badge-info", label: "Enviada" },
                       cancelada: { class: "badge-danger", label: "Cancelada" },
                     };

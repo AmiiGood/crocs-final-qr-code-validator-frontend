@@ -130,12 +130,12 @@ const PoManagementPage = () => {
           (po) =>
             po.estado === "importada" ||
             po.estado === "en_proceso" ||
-            po.estado === "completada"
+            po.estado === "completada" // NUEVO
         );
+      case "ready": // NUEVO FILTRO
+        return pos.filter((po) => po.estado === "completada");
       case "completed":
-        return pos.filter(
-          (po) => po.estado === "enviada" || po.estado === "completada"
-        );
+        return pos.filter((po) => po.estado === "enviada");
       default:
         return pos;
     }
@@ -165,11 +165,27 @@ const PoManagementPage = () => {
 
     return (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium ${badge.color}`}
+        className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ${badge.color}`}
       >
         {badge.label}
       </span>
     );
+  };
+
+  // Función para obtener el color de la barra de progreso
+  const getProgressColor = (progreso) => {
+    if (progreso === 100) return "bg-green-600";
+    if (progreso >= 70) return "bg-yellow-500";
+    if (progreso >= 40) return "bg-orange-500";
+    return "bg-red-500";
+  };
+
+  // Función para obtener el color del texto del progreso
+  const getProgressTextColor = (progreso) => {
+    if (progreso === 100) return "text-green-600";
+    if (progreso >= 70) return "text-yellow-600";
+    if (progreso >= 40) return "text-orange-600";
+    return "text-red-600";
   };
 
   return (
@@ -188,9 +204,9 @@ const PoManagementPage = () => {
       <div className="flex items-center gap-2">
         <button
           onClick={() => setFilter("all")}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
+          className={`px-4 py-2 text-sm font-medium transition-colors rounded-lg ${
             filter === "all"
-              ? "bg-neutral-900 text-white"
+              ? "bg-blue-600 text-white"
               : "bg-white text-neutral-700 border border-neutral-300 hover:border-neutral-900"
           }`}
         >
@@ -198,10 +214,10 @@ const PoManagementPage = () => {
         </button>
         <button
           onClick={() => setFilter("active")}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
+          className={`px-4 py-2 text-sm font-medium transition-colors rounded-lg ${
             filter === "active"
-              ? "bg-neutral-900 text-white"
-              : "bg-white text-neutral-700 border border-neutral-300 hover:border-neutral-900"
+              ? "bg-yellow-500 text-white"
+              : "bg-white text-neutral-700 border border-neutral-300 hover:border-yellow-500"
           }`}
         >
           Activas (
@@ -216,20 +232,25 @@ const PoManagementPage = () => {
           )
         </button>
         <button
+          onClick={() => setFilter("ready")}
+          className={`px-4 py-2 text-sm font-medium transition-colors rounded-lg ${
+            filter === "ready"
+              ? "bg-green-600 text-white"
+              : "bg-white text-neutral-700 border border-neutral-300 hover:border-green-600"
+          }`}
+        >
+          Listas para Enviar (
+          {pos.filter((po) => po.estado === "completada").length})
+        </button>
+        <button
           onClick={() => setFilter("completed")}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
+          className={`px-4 py-2 text-sm font-medium transition-colors rounded-lg ${
             filter === "completed"
               ? "bg-neutral-900 text-white"
               : "bg-white text-neutral-700 border border-neutral-300 hover:border-neutral-900"
           }`}
         >
-          Enviadas (
-          {
-            pos.filter(
-              (po) => po.estado === "enviada" || po.estado === "completada"
-            ).length
-          }
-          )
+          Enviadas ({pos.filter((po) => po.estado === "enviada").length})
         </button>
         <div className="ml-auto">
           <button onClick={loadPos} className="btn-ghost text-xs">
@@ -244,7 +265,7 @@ const PoManagementPage = () => {
           <Loader className="h-6 w-6 animate-spin text-neutral-900" />
         </div>
       ) : filteredPos.length > 0 ? (
-        <div className="border border-neutral-200">
+        <div className="border border-neutral-200 rounded-xl overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50">
@@ -300,17 +321,19 @@ const PoManagementPage = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex-1 bg-neutral-200 h-1.5 max-w-[120px]">
+                        <div className="flex-1 bg-neutral-200 h-2 max-w-[120px] rounded-full overflow-hidden">
                           <div
-                            className={`h-1.5 transition-all ${
-                              progreso === 100
-                                ? "bg-neutral-900"
-                                : "bg-neutral-700"
-                            }`}
+                            className={`h-2 transition-all rounded-full ${getProgressColor(
+                              progreso
+                            )}`}
                             style={{ width: `${progreso}%` }}
                           ></div>
                         </div>
-                        <span className="text-xs font-medium text-neutral-700 w-10 text-right">
+                        <span
+                          className={`text-xs font-bold w-10 text-right ${getProgressTextColor(
+                            progreso
+                          )}`}
+                        >
                           {progreso}%
                         </span>
                       </div>
@@ -343,7 +366,7 @@ const PoManagementPage = () => {
           </table>
         </div>
       ) : (
-        <div className="border border-neutral-200 p-12 text-center">
+        <div className="border border-neutral-200 rounded-xl p-12 text-center">
           <Package className="h-12 w-12 mx-auto mb-4 text-neutral-400" />
           <p className="text-sm text-neutral-500 mb-4">
             No hay Purchase Orders {filter !== "all" && "en esta categoría"}
@@ -361,7 +384,7 @@ const PoManagementPage = () => {
 
       {/* Panel de Detalles */}
       {selectedPo && poDetails && (
-        <div className="border border-neutral-200 p-6 animate-fade-in">
+        <div className="border border-neutral-200 rounded-xl p-6 animate-fade-in">
           <div className="flex justify-between items-start mb-6">
             <div>
               <div className="flex items-center gap-3 mb-2">
@@ -391,7 +414,7 @@ const PoManagementPage = () => {
 
           {/* Estadísticas */}
           <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="border border-neutral-200 p-4">
+            <div className="border border-neutral-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-neutral-500">Cartones</span>
                 <Box className="h-4 w-4 text-neutral-400" />
@@ -402,7 +425,7 @@ const PoManagementPage = () => {
               <p className="text-xs text-neutral-500">Total requeridos</p>
             </div>
 
-            <div className="border border-neutral-200 p-4">
+            <div className="border border-neutral-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-neutral-500">Pares</span>
                 <Package className="h-4 w-4 text-neutral-400" />
@@ -413,12 +436,20 @@ const PoManagementPage = () => {
               <p className="text-xs text-neutral-500">Total esperados</p>
             </div>
 
-            <div className="border border-neutral-200 p-4">
+            <div className="border border-neutral-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-neutral-500">Progreso</span>
                 <TrendingUp className="h-4 w-4 text-neutral-400" />
               </div>
-              <p className="text-2xl font-medium text-neutral-900">
+              <p
+                className={`text-2xl font-medium ${getProgressTextColor(
+                  Math.round(
+                    ((poDetails.cartones_completos || 0) /
+                      (poDetails.cantidad_cartones || 1)) *
+                      100
+                  )
+                )}`}
+              >
                 {Math.round(
                   ((poDetails.cartones_completos || 0) /
                     (poDetails.cantidad_cartones || 1)) *
@@ -433,7 +464,7 @@ const PoManagementPage = () => {
           {/* Validación */}
           {validation && (
             <div
-              className={`border-2 p-6 mb-6 ${
+              className={`border-2 rounded-lg p-6 mb-6 ${
                 validation.success
                   ? "border-green-200 bg-green-50"
                   : "border-yellow-200 bg-yellow-50"
@@ -476,7 +507,7 @@ const PoManagementPage = () => {
                       <button
                         onClick={handleCancel}
                         disabled={sending}
-                        className="px-4 py-2 text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
+                        className="px-4 py-2 text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition-colors rounded-lg"
                       >
                         <XCircle className="h-4 w-4 inline mr-2" />
                         Cancelar
@@ -501,7 +532,7 @@ const PoManagementPage = () => {
 
           {/* Vista Previa */}
           {preview && (
-            <div className="border border-neutral-200 p-6">
+            <div className="border border-neutral-200 rounded-lg p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-sm font-medium text-neutral-900">
                   Vista Previa de Datos para T4
@@ -513,7 +544,7 @@ const PoManagementPage = () => {
                   Ocultar
                 </button>
               </div>
-              <div className="bg-neutral-50 p-4 overflow-auto max-h-96">
+              <div className="bg-neutral-50 rounded-lg p-4 overflow-auto max-h-96">
                 <pre className="text-xs font-mono text-neutral-700">
                   {JSON.stringify(preview.trysorData, null, 2)}
                 </pre>

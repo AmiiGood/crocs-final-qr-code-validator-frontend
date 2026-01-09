@@ -35,9 +35,34 @@ const ShippingPage = () => {
     }
   }, [selectedPo]);
 
+  // Auto-focus inicial y cuando cambia el cartón actual
   useEffect(() => {
     inputRef.current?.focus();
-  }, [cartonActual]);
+  }, [cartonActual, selectedPo]);
+
+  // Mantener el focus SIEMPRE en el input
+  useEffect(() => {
+    const keepFocus = () => {
+      if (inputRef.current && document.activeElement !== inputRef.current) {
+        inputRef.current.focus();
+      }
+    };
+
+    // Re-enfocar cada 100ms
+    const interval = setInterval(keepFocus, 100);
+
+    // Re-enfocar cuando se hace click en cualquier parte
+    const handleClick = () => {
+      setTimeout(() => inputRef.current?.focus(), 0);
+    };
+
+    document.addEventListener("click", handleClick);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("click", handleClick);
+    };
+  }, []);
 
   const cleanCode = (raw) => {
     if (!raw) return "";
@@ -91,6 +116,7 @@ const ShippingPage = () => {
       console.error(error);
     } finally {
       setLoading(false);
+      setTimeout(() => inputRef.current?.focus(), 0);
     }
   };
 
@@ -102,6 +128,7 @@ const ShippingPage = () => {
     if (!cleaned) {
       toast.error("Código inválido");
       setScanInput("");
+      setTimeout(() => inputRef.current?.focus(), 0);
       return;
     }
 
@@ -111,6 +138,7 @@ const ShippingPage = () => {
       if (esCaja) {
         toast.error("Primero escanea el cartón, no la caja");
         setScanInput("");
+        setTimeout(() => inputRef.current?.focus(), 0);
         return;
       }
       await seleccionarCarton(cleaned);
@@ -119,6 +147,7 @@ const ShippingPage = () => {
         if (!esCaja) {
           toast.error("Escanea el código de la caja (con símbolo $)");
           setScanInput("");
+          setTimeout(() => inputRef.current?.focus(), 0);
           return;
         }
         await asignarCaja(cleaned);
@@ -128,6 +157,7 @@ const ShippingPage = () => {
             "Los cartones musicales no usan cajas. Escanea el QR del par"
           );
           setScanInput("");
+          setTimeout(() => inputRef.current?.focus(), 0);
           return;
         }
         await escanearParMusical(cleaned);
@@ -151,12 +181,14 @@ const ShippingPage = () => {
     if (!carton) {
       toast.error(`Cartón "${codigo}" no encontrado en esta PO`);
       setScanInput("");
+      setTimeout(() => inputRef.current?.focus(), 0);
       return;
     }
 
     if (tipo === "mono_sku" && carton.caja_asignada) {
       toast.success(`Cartón "${codigo}" ya está completo`);
       setScanInput("");
+      setTimeout(() => inputRef.current?.focus(), 0);
       return;
     }
 
@@ -169,6 +201,7 @@ const ShippingPage = () => {
         toast.error("Error al cargar cartón");
         console.error(error);
         setScanInput("");
+        setTimeout(() => inputRef.current?.focus(), 0);
         return;
       }
     }
@@ -180,6 +213,7 @@ const ShippingPage = () => {
         tipo === "mono_sku" ? "Escanea la caja" : "Escanea los pares"
       }`
     );
+    setTimeout(() => inputRef.current?.focus(), 0);
   };
 
   const asignarCaja = async (codigoCaja) => {
@@ -200,6 +234,7 @@ const ShippingPage = () => {
     } catch (error) {
       toast.error(error.response?.data?.error || "Error al asignar caja");
       setScanInput("");
+      setTimeout(() => inputRef.current?.focus(), 0);
     }
   };
 
@@ -233,11 +268,13 @@ const ShippingPage = () => {
           );
           setCartonDetails(detailsResponse.data.data);
           setScanInput("");
+          setTimeout(() => inputRef.current?.focus(), 0);
         }
       }
     } catch (error) {
       toast.error(error.response?.data?.error || "Error al escanear");
       setScanInput("");
+      setTimeout(() => inputRef.current?.focus(), 0);
     }
   };
 

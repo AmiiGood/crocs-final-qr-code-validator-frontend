@@ -11,9 +11,34 @@ const ProductionPage = () => {
 
   const inputRef = useRef(null);
 
+  // Auto-focus inicial y cuando cambia la caja actual
   useEffect(() => {
     inputRef.current?.focus();
   }, [cajaActual]);
+
+  // Mantener el focus SIEMPRE en el input
+  useEffect(() => {
+    const keepFocus = () => {
+      if (inputRef.current && document.activeElement !== inputRef.current) {
+        inputRef.current.focus();
+      }
+    };
+
+    // Re-enfocar cada 100ms
+    const interval = setInterval(keepFocus, 100);
+
+    // Re-enfocar cuando se hace click en cualquier parte
+    const handleClick = () => {
+      setTimeout(() => inputRef.current?.focus(), 0);
+    };
+
+    document.addEventListener("click", handleClick);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("click", handleClick);
+    };
+  }, []);
 
   useEffect(() => {
     if (cajaActual) {
@@ -60,6 +85,7 @@ const ProductionPage = () => {
     if (!cleaned) {
       toast.error("Código inválido");
       setScanInput("");
+      setTimeout(() => inputRef.current?.focus(), 0);
       return;
     }
 
@@ -71,6 +97,7 @@ const ProductionPage = () => {
       if (!cajaActual) {
         toast.error("Primero escanea una caja");
         setScanInput("");
+        setTimeout(() => inputRef.current?.focus(), 0);
         return;
       }
       await escanearPar(cleaned);
@@ -92,6 +119,7 @@ const ProductionPage = () => {
       setScanInput("");
     } finally {
       setLoading(false);
+      setTimeout(() => inputRef.current?.focus(), 0);
     }
   };
 
@@ -108,16 +136,19 @@ const ProductionPage = () => {
             setCajaActual(null);
             setProgreso(null);
             setScanInput("");
+            inputRef.current?.focus();
           }, 1500);
         } else {
           toast.success(`${cantidad_escaneada}/${cantidad_requerida}`);
           await loadProgreso();
           setScanInput("");
+          setTimeout(() => inputRef.current?.focus(), 0);
         }
       }
     } catch (error) {
       toast.error(error.response?.data?.error || "Error al escanear");
       setScanInput("");
+      setTimeout(() => inputRef.current?.focus(), 0);
     }
   };
 

@@ -51,19 +51,39 @@ const ProductionPage = () => {
     if (!raw) return "";
     let cleaned = raw.trim().toUpperCase();
 
+    // 🔧 Reemplazar apóstrofes por guiones (fix para escáner mal configurado)
+    cleaned = cleaned.replace(/'/g, "-");
+
+    // 🔧 NUEVO: Manejar URLs pegadas sin separadores
+    // Detectar patrones como "HTTPSVERIFYCROCSCOMQ" o "HTTPS://VERIFY.CROCS.COM/Q"
     if (
-      cleaned.includes("verify.crocs.com") ||
+      cleaned.includes("VERIFYCROCSCOM") ||
       cleaned.includes("VERIFY.CROCS.COM")
     ) {
-      const parts = cleaned.split(/[\/]/);
-      cleaned = parts[parts.length - 1];
+      // Buscar el patrón "...COM" seguido de una Q opcional y luego el código
+      const match = cleaned.match(/COM[Q\/\-]?([A-Z0-9]+)$/i);
+      if (match && match[1]) {
+        cleaned = match[1];
+      } else {
+        // Fallback: tomar todo después de COM
+        const comIndex = cleaned.lastIndexOf("COM");
+        if (comIndex !== -1) {
+          cleaned = cleaned.substring(comIndex + 3);
+          // Remover Q inicial si existe
+          cleaned = cleaned.replace(/^[Q\/\-]+/i, "");
+        }
+      }
     }
 
-    cleaned = cleaned.replace(/^Q[-\/]/i, "");
+    // Remover prefijos Q- o Q/
+    cleaned = cleaned.replace(/^[Q\/\-]+/i, "");
 
+    // Filtrar caracteres según tipo de código
     if (cleaned.includes("$")) {
+      // Código de caja
       return cleaned.replace(/[^A-Z0-9$\-]/g, "");
     } else {
+      // Código QR (solo alfanumérico)
       return cleaned.replace(/[^A-Z0-9]/g, "");
     }
   };
